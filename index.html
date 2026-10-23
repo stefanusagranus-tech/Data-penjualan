@@ -4,30 +4,191 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Semua Tabel Supabase</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Modern Reset & Dark Theme Styling */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 1.5rem;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 80rem;
+            margin: 0 auto;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .header-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .header-title p {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .btn-refresh {
+            background-color: #4f46e5;
+            color: #ffffff;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-refresh:hover {
+            background-color: #6366f1;
+        }
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 500;
+        }
+        .badge-loading {
+            background-color: rgba(234, 179, 8, 0.1);
+            color: #facc15;
+            border: 1px solid rgba(234, 179, 8, 0.2);
+        }
+        .badge-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .badge-error {
+            background-color: rgba(244, 63, 94, 0.1);
+            color: #fb7185;
+            border: 1px solid rgba(244, 63, 94, 0.2);
+        }
+        
+        /* Table Cards Container */
+        .tables-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+        .table-card {
+            background-color: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+        .table-card-header {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(15, 23, 42, 0.3);
+        }
+        .table-card-header h3 {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .row-count {
+            font-family: monospace;
+            font-size: 0.75rem;
+            background-color: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+        }
+        
+        /* Table Styling */
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 24rem;
+        }
+        table {
+            width: 100%;
+            text-align: left;
+            border-collapse: collapse;
+        }
+        th {
+            background-color: rgba(15, 23, 42, 0.8);
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #1e293b;
+            font-size: 0.75rem;
+            font-family: monospace;
+            color: #cbd5e1;
+            white-space: nowrap;
+            max-width: 20rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        tr:hover {
+            background-color: rgba(51, 65, 85, 0.2);
+        }
+        .empty-row {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+        .loading-text, .error-text {
+            text-align: center;
+            padding: 3rem;
+            color: #64748b;
+        }
+        .error-text {
+            color: #fb7185;
+        }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen p-6">
+<body>
 
-    <div class="max-w-7xl mx-auto">
+    <div class="container">
         <!-- Header -->
-        <header class="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white">📊 Dashboard Seluruh Data Supabase</h1>
-                <p class="text-sm text-slate-400">Monitoring & Baca Data Semua Tabel</p>
+        <header>
+            <div class="header-title">
+                <h1>📊 Dashboard Seluruh Data Supabase</h1>
+                <p>Monitoring & Baca Data Semua Tabel</p>
             </div>
-            <div class="flex items-center gap-4">
-                <button onclick="loadAllData()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition">
-                    Refresh Semua Data
-                </button>
-                <div id="api-status" class="px-3 py-1 text-xs rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-                    Memeriksa...
-                </div>
+            <div class="header-actions">
+                <button onclick="loadAllData()" class="btn-refresh">Refresh Semua Data</button>
+                <div id="api-status" class="badge badge-loading">Memeriksa...</div>
             </div>
         </header>
 
         <!-- Container untuk Semua Tabel -->
-        <div id="tables-container" class="space-y-12">
-            <div class="text-center py-12 text-slate-500">Memuat seluruh data dari server...</div>
+        <div id="tables-container" class="tables-grid">
+            <div class="loading-text">Memuat seluruh data dari server...</div>
         </div>
     </div>
 
@@ -39,7 +200,7 @@
             const container = document.getElementById("tables-container");
             const statusBadge = document.getElementById("api-status");
             
-            container.innerHTML = `<div class="text-center py-12 text-slate-500">Sedang menarik data dari semua tabel...</div>`;
+            container.innerHTML = `<div class="loading-text">Sedang menarik data dari semua tabel...</div>`;
 
             try {
                 const res = await fetch(`${API_BASE_URL}/api/all-tables`);
@@ -47,47 +208,43 @@
 
                 if (result.status === "success") {
                     statusBadge.textContent = "API Terhubung 🟢";
-                    statusBadge.className = "px-3 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                    statusBadge.className = "badge badge-success";
                     
                     container.innerHTML = "";
                     const tables = result.data;
 
-                    // Loop untuk setiap tabel yang dikirim backend
-                    for [tableName, rows] of Object.entries(tables)) {
+                    // Render setiap tabel dari response backend
+                    for (const [tableName, rows] of Object.entries(tables)) {
                         let tableHTML = `
-                            <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden shadow-xl">
-                                <div class="p-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-900/30">
-                                    <h3 class="font-bold text-lg text-white uppercase tracking-wide">📂 Tabel: ${tableName}</h3>
-                                    <span class="px-3 py-1 text-xs rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
-                                        Total: ${rows.length} baris
-                                    </span>
+                            <div class="table-card">
+                                <div class="table-card-header">
+                                    <h3>📂 Tabel: ${tableName}</h3>
+                                    <span class="row-count">Total: ${rows.length} baris</span>
                                 </div>
-                                <div class="overflow-x-auto max-h-96">
-                                    <table class="w-full text-left border-collapse">
+                                <div class="table-wrapper">
+                                    <table>
                         `;
 
-                        if (rows.length > 0) {
-                            // Ambil kunci/kolom dari baris pertama
+                        if (rows && rows.length > 0) {
                             const columns = Object.keys(rows[0]);
                             
-                            tableHTML += `<thead><tr class="bg-slate-900/80 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700/50 sticky top-0">`;
+                            tableHTML += `<thead><tr>`;
                             columns.forEach(col => {
-                                tableHTML += `<th class="p-3">${col}</th>`;
+                                tableHTML += `<th>${col}</th>`;
                             });
-                            tableHTML += `</tr></thead><tbody class="divide-y divide-slate-800 text-xs font-mono text-slate-300">`;
+                            tableHTML += `</tr></thead><tbody>`;
 
-                            // Masukkan data baris
                             rows.forEach(row => {
-                                tableHTML += `<tr class="hover:bg-slate-700/20 transition">`;
+                                tableHTML += `<tr>`;
                                 columns.forEach(col => {
                                     let val = row[col] !== null ? row[col] : "-";
-                                    tableHTML += `<td class="p-3 truncate max-w-xs">${val}</td>`;
+                                    tableHTML += `<td>${val}</td>`;
                                 });
                                 tableHTML += `</tr>`;
                             });
                             tableHTML += `</tbody>`;
                         } else {
-                            tableHTML += `<tbody><tr><td colspan="100" class="p-6 text-center text-slate-500">Tabel ini masih kosong.</td></tr></tbody>`;
+                            tableHTML += `<tbody><tr><td class="empty-row" colspan="100">Tabel ini masih kosong.</td></tr></tbody>`;
                         }
 
                         tableHTML += `</table></div></div>`;
@@ -96,8 +253,8 @@
                 }
             } catch (error) {
                 statusBadge.textContent = "API Terputus 🔴";
-                statusBadge.className = "px-3 py-1 text-xs rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20";
-                container.innerHTML = `<div class="text-center py-12 text-rose-400">Gagal memuat data. Periksa koneksi backend FastAPI.</div>`;
+                statusBadge.className = "badge badge-error";
+                container.innerHTML = `<div class="error-text">Gagal memuat data. Periksa koneksi backend FastAPI.</div>`;
             }
         }
 
