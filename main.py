@@ -34,3 +34,26 @@ def get_sales_data(supabase: Client = Depends(get_supabase_client)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/all-tables")
+def get_all_tables(supabase: Client = Depends(get_supabase_client)):
+    try:
+        # Mengambil data dari seluruh tabel utama
+        sales_store = supabase.table("sales_store").select("*").execute().data
+        sales_item = supabase.table("sales_item").select("*").execute().data
+        sales_pps = supabase.table("sales_pps").select("*").execute().data
+        master_item = supabase.table("master_item").select("*").execute().data
+        master_personil = supabase.table("master_personil").select("*").execute().data
+        
+        return {
+            "status": "success",
+            "data": {
+                "sales_store": sales_store,
+                "sales_item": sales_item,
+                "sales_pps": sales_pps,
+                "master_item": master_item,
+                "master_personil": master_personil
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

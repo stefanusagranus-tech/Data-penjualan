@@ -3,112 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Penjualan</title>
-    <!-- Tailwind CSS CDN untuk styling yang cepat dan elegan -->
+    <title>Dashboard Semua Tabel Supabase</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen p-6">
 
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-7xl mx-auto">
         <!-- Header -->
         <header class="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white">📊 Dashboard Penjualan</h1>
-                <p class="text-sm text-slate-400">Sistem Laporan & Data Real-time</p>
+                <h1 class="text-2xl font-bold tracking-tight text-white">📊 Dashboard Seluruh Data Supabase</h1>
+                <p class="text-sm text-slate-400">Monitoring & Baca Data Semua Tabel</p>
             </div>
-            <div id="api-status" class="px-3 py-1 text-xs rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-                Memeriksa koneksi API...
+            <div class="flex items-center gap-4">
+                <button onclick="loadAllData()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition">
+                    Refresh Semua Data
+                </button>
+                <div id="api-status" class="px-3 py-1 text-xs rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                    Memeriksa...
+                </div>
             </div>
         </header>
 
-        <!-- Ringkasan / Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-slate-800/50 border border-slate-700/50 p-5 rounded-xl">
-                <p class="text-sm text-slate-400">Total Data Tercatat</p>
-                <h3 id="total-data" class="text-3xl font-extrabold text-white mt-2">-</h3>
-            </div>
-            <!-- Tambahkan card lain jika butuh -->
-        </div>
-
-        <!-- Tabel Data -->
-        <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden shadow-xl">
-            <div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
-                <h3 class="font-semibold text-white">Daftar Transaksi Terbaru</h3>
-                <button onclick="loadSalesData()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition">
-                    Refresh Data
-                </button>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700/50">
-                            <th class="p-4">ID / Transaksi</th>
-                            <th class="p-4">Detail Data</th>
-                        </tr>
-                    </thead>
-                    <tbody id="sales-table-body" class="divide-y divide-slate-800 text-sm text-slate-300">
-                        <tr>
-                            <td colspan="2" class="p-6 text-center text-slate-500">Memuat data dari server...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <!-- Container untuk Semua Tabel -->
+        <div id="tables-container" class="space-y-12">
+            <div class="text-center py-12 text-slate-500">Memuat seluruh data dari server...</div>
         </div>
     </div>
 
-    <!-- Script untuk koneksi ke Backend API -->
     <script>
-        // Ganti URL ini dengan URL backend FastAPI kamu saat sudah online (atau http://127.0.0.1:8000 untuk lokal)
-        const API_BASE_URL = "https://data-penjualan.fastapicloud.dev"
+        // Ganti dengan URL backend publikmu (misal dari fastapicloud.com)
+        const API_BASE_URL = "https://YOUR-BACKEND-URL.fastapicloud.com";
 
-        async function checkApiStatus() {
+        async function loadAllData() {
+            const container = document.getElementById("tables-container");
             const statusBadge = document.getElementById("api-status");
+            
+            container.innerHTML = `<div class="text-center py-12 text-slate-500">Sedang menarik data dari semua tabel...</div>`;
+
             try {
-                const res = await fetch(`${API_BASE_URL}/`);
-                const data = await res.json();
-                if (data.status === "success") {
+                const res = await fetch(`${API_BASE_URL}/api/all-tables`);
+                const result = await res.json();
+
+                if (result.status === "success") {
                     statusBadge.textContent = "API Terhubung 🟢";
                     statusBadge.className = "px-3 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                    
+                    container.innerHTML = "";
+                    const tables = result.data;
+
+                    // Loop untuk setiap tabel yang dikirim backend
+                    for [tableName, rows] of Object.entries(tables)) {
+                        let tableHTML = `
+                            <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden shadow-xl">
+                                <div class="p-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-900/30">
+                                    <h3 class="font-bold text-lg text-white uppercase tracking-wide">📂 Tabel: ${tableName}</h3>
+                                    <span class="px-3 py-1 text-xs rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
+                                        Total: ${rows.length} baris
+                                    </span>
+                                </div>
+                                <div class="overflow-x-auto max-h-96">
+                                    <table class="w-full text-left border-collapse">
+                        `;
+
+                        if (rows.length > 0) {
+                            // Ambil kunci/kolom dari baris pertama
+                            const columns = Object.keys(rows[0]);
+                            
+                            tableHTML += `<thead><tr class="bg-slate-900/80 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700/50 sticky top-0">`;
+                            columns.forEach(col => {
+                                tableHTML += `<th class="p-3">${col}</th>`;
+                            });
+                            tableHTML += `</tr></thead><tbody class="divide-y divide-slate-800 text-xs font-mono text-slate-300">`;
+
+                            // Masukkan data baris
+                            rows.forEach(row => {
+                                tableHTML += `<tr class="hover:bg-slate-700/20 transition">`;
+                                columns.forEach(col => {
+                                    let val = row[col] !== null ? row[col] : "-";
+                                    tableHTML += `<td class="p-3 truncate max-w-xs">${val}</td>`;
+                                });
+                                tableHTML += `</tr>`;
+                            });
+                            tableHTML += `</tbody>`;
+                        } else {
+                            tableHTML += `<tbody><tr><td colspan="100" class="p-6 text-center text-slate-500">Tabel ini masih kosong.</td></tr></tbody>`;
+                        }
+
+                        tableHTML += `</table></div></div>`;
+                        container.innerHTML += tableHTML;
+                    }
                 }
             } catch (error) {
                 statusBadge.textContent = "API Terputus 🔴";
                 statusBadge.className = "px-3 py-1 text-xs rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                container.innerHTML = `<div class="text-center py-12 text-rose-400">Gagal memuat data. Periksa koneksi backend FastAPI.</div>`;
             }
         }
 
-        async function loadSalesData() {
-            const tbody = document.getElementById("sales-table-body");
-            const totalDataEl = document.getElementById("total-data");
-            tbody.innerHTML = `<tr><td colspan="2" class="p-6 text-center text-slate-500">Mengambil data...</td></tr>`;
-
-            try {
-                const res = await fetch(`${API_BASE_URL}/api/sales`);
-                const result = await res.json();
-
-                if (result.status === "success" && result.data.length > 0) {
-                    totalDataEl.textContent = result.data.length;
-                    tbody.innerHTML = "";
-                    
-                    result.data.forEach((row, index) => {
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-slate-700/20 transition">
-                                <td class="p-4 font-mono text-indigo-400">#${index + 1}</td>
-                                <td class="p-4 font-mono text-xs text-slate-400">${JSON.stringify(row)}</td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    totalDataEl.textContent = "0";
-                    tbody.innerHTML = `<tr><td colspan="2" class="p-6 text-center text-slate-500">Belum ada data tersedia di tabel.</td></tr>`;
-                }
-            } catch (error) {
-                tbody.innerHTML = `<tr><td colspan="2" class="p-6 text-center text-rose-400">Gagal memuat data dari server. Pastikan backend aktif.</td></tr>`;
-            }
-        }
-
-        // Jalankan saat halaman dibuka
-        checkApiStatus();
-        loadSalesData();
+        loadAllData();
     </script>
 </body>
 </html>
